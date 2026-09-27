@@ -1,0 +1,64 @@
+### DEMO 1 — customer searches for a laptop and checks stock (main required scenario) ###
+
+=== Role: customer ===
+User request: Find a laptop that is currently in stock
+
+--- Agent trace (tool calls) ---
+1. tool=search_products  input={'query': 'laptop'}
+   result={'ok': True, 'data': [{'id': 1, 'name': 'Dell XPS 13 Laptop', 'category': 'laptop', 'price': 999.99, 'stock': 5}, {'id': 2, 'name': 'MacBook Air M2', 'category': 'laptop', 'price': 1199.0, 'stock': 0}]}
+2. tool=check_stock  input={'product_id': 1}
+   result={'ok': True, 'data': {'product_id': 1, 'name': 'Dell XPS 13 Laptop', 'stock': 5}}
+
+--- Final answer ---
+Found 'Dell XPS 13 Laptop' ($999.99), in stock: 5 units.
+
+### DEMO 2 — customer buys a product successfully ###
+
+=== Role: customer ===
+User request: Buy product 3, quantity 2
+
+--- Agent trace (tool calls) ---
+1. tool=buy_product  input={'product_id': 3, 'quantity': 2}
+   result={'ok': True, 'data': {'product_id': 3, 'name': 'Logitech Wireless Mouse', 'purchased': 2, 'remaining_stock': 48}}
+
+--- Final answer ---
+Bought 2 x Logitech Wireless Mouse. Remaining stock: 48.
+
+### DEMO 3 — customer tries to buy more than available stock (OUT_OF_STOCK error handling) ###
+
+=== Role: customer ===
+User request: Buy product 2, quantity 1
+
+--- Agent trace (tool calls) ---
+1. tool=buy_product  input={'product_id': 2, 'quantity': 1}
+   result={'ok': False, 'error': 'TOOL_ERROR', 'message': 'OUT_OF_STOCK: only 0 unit(s) left for MacBook Air M2'}
+
+--- Final answer ---
+Could not buy product: TOOL_ERROR - OUT_OF_STOCK: only 0 unit(s) left for MacBook Air M2
+
+### DEMO 4 — customer tries to delete a product (should be PERMISSION_DENIED) ###
+
+=== Role: customer ===
+User request: Delete product 1
+
+--- Agent trace (tool calls) ---
+1. tool=delete_product  input={'product_id': 1}
+   result={'ok': False, 'error': 'PERMISSION_DENIED', 'message': "Role 'customer' is not allowed to call 'delete_product'"}
+
+--- Final answer ---
+Could not delete product: PERMISSION_DENIED - Role 'customer' is not allowed to call 'delete_product'
+
+### DEMO 5 — admin deletes a product successfully (permission granted) ###
+
+=== Role: admin ===
+User request: Delete product 4
+
+--- Agent trace (tool calls) ---
+1. tool=delete_product  input={'product_id': 4}
+   result={'ok': True, 'data': {'deleted_product_id': 4, 'name': 'Mechanical Keyboard'}}
+
+--- Final answer ---
+Deleted product #4 (Mechanical Keyboard).
+
+### DEMO 6 — invalid input (negative product id -> INVALID_INPUT) ###
+{'ok': False, 'error': 'INVALID_INPUT', 'message': '1 validation error for CheckStockInput\nproduct_id\n  Input should be greater than 0 [type=greater_than, input_value=-5, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/greater_than'}
